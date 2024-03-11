@@ -27,9 +27,9 @@ class MTime{
         int16_t ts = tC->getSeconds();
         int16_t rez = 0;
         if(th != h){
-            rez = 7;
-        }else if(tm != m) {
             rez = 3;
+        }else if(tm != m) {
+            rez = 2;
         }else if(ts != s){
             rez = 1;
         }
@@ -50,7 +50,7 @@ WiFiClient client;
 //---------------------------------------------
 //положение часов
 int cursPosX = 30;
-int cursPosY = 10;
+int cursPosY = 50;
 //---------------------------------------------
 // associate tft with ILI9341 lib
 Adafruit_ILI9341 tft = Adafruit_ILI9341(tftCS, tftDC, tftRST);
@@ -80,8 +80,9 @@ void setup()
     timeClient.begin();
     timeClient.update();
 
-    tft.drawRect(0,0,319,239,ILI9341_BLUE); // draw white frame line
-    tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
+    // tft.drawRect(0,0,319,239,ILI9341_BLUE); // draw white frame line
+    tft.fillRect(0,0,319,239,ILI9341_BLACK);
+    // tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
     tft.setTextSize(4); // set text size
 }
 //------------------------------------------------------------------------
@@ -90,11 +91,11 @@ void outTime(NTPClient *tk){
     tk->update();
     tft.setTextSize(4); // set text size
     int16_t c = oldTime.compare(tk);
-    tft.fillRect(cursPosX + (3 - c) * 60, cursPosY ,cursPosX + 180,cursPosY + 150,ILI9341_BLACK);
-    tft.println(tk->getFormattedTime());
-    tft.setTextSize(2); // set text size
-    tft.print("          ");
-    tft.print(oldTime.compare(tk));
+    int16_t w = (3 - c) * 70;
+    // tft.fillRect(cursPosX, cursPosY , 190, 40, ILI9341_BLUE);
+    String str = tk->getFormattedTime();
+    tft.fillRect(cursPosX + w, cursPosY , c * 70 - 20, 30, ILI9341_BLACK);
+    tft.print(str);
     oldTime.set(tk);
 }
 //------------------------------------------------------------------------
