@@ -20,7 +20,24 @@ bool MTime::set(NTPClient *tC){
     h = tC->getHours();
     m = tC->getMinutes();
     s = tC->getSeconds();
+
     res = ((h + m + s) == 0) || (!dateSet);
+    if(res)d = tC -> getDay();
     dateSet = 1;
+    return res;
+}
+//---------------------------
+uint16_t MTime::getColorTime(){
+    uint16_t res = 0xFFBB;
+    if((h > 5) && (h < 23)){
+        res = 0xFFFF;
+    } 
+    return res;
+}//---------------------------
+uint16_t MTime::getColorDate(){
+    uint16_t res = 0xFFFF;
+    if(d == 0 || d == 6){
+        res = 0xFFFF;
+    }
     return res;
 }

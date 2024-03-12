@@ -67,12 +67,15 @@ void outTime(NTPClient *tk){
     int16_t w = (3 - c) * 70;
     // tft.fillRect(cursPosX, cursPosY , 190, 40, ILI9341_BLUE);
     String str = tk->getFormattedTime();
+    // tft.setTextColor(ILI9341_WHITE);
     tft.fillRect(cursPosX + w, cursPosY , c * 70 - 20, 30, ILI9341_BLACK);
     tft.println(str);
     if(oldTime.set(tk)){
         String strD = tk->getFormattedDate();
         tft.setCursor(cursPosX, cursPosY + 35);
         tft.setTextSize(2); // set text size
+        tft.setTextColor(oldTime.getColorTime());
+        tft.fillRect(cursPosX, cursPosY + 35, 240, 20, ILI9341_BLACK);
         tft.print(strD);
     }
 }
