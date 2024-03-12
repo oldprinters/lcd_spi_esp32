@@ -1,8 +1,9 @@
 
 #include <Adafruit_ILI9341.h> // include ILI9341 library
 #include <WiFi.h> // library to connect to Wi-Fi network
-#include <NTPClient.h>
+#include "NTPClient.h"
 #include <WiFiUdp.h>
+#include "mtime.h"
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 3600000);
@@ -10,38 +11,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 3600000);
 int tftCS = 5; // screen chip select pin
 int tftDC = 26; // data command select pin
 int tftRST = 25; // reset pin
-class MTime{
-    int16_t h;
-    int16_t m;
-    int16_t s;
-    public:
-    MTime(){
-        h = 0;
-        m = 0;
-        s = 0;
-    };
-    //-----------------------
-    int16_t compare(NTPClient *tC){
-        int16_t th = tC->getHours();
-        int16_t tm = tC->getMinutes();
-        int16_t ts = tC->getSeconds();
-        int16_t rez = 0;
-        if(th != h){
-            rez = 3;
-        }else if(tm != m) {
-            rez = 2;
-        }else if(ts != s){
-            rez = 1;
-        }
-        return rez;
-    }
-    //---------------------------
-    void set(NTPClient *tC){
-        h = tC->getHours();
-        m = tC->getMinutes();
-        s = tC->getSeconds();
-    }
-};
+
 MTime oldTime;
 //---------------------------------------------
 const char* ssid = "ivanych";
@@ -95,8 +65,13 @@ void outTime(NTPClient *tk){
     // tft.fillRect(cursPosX, cursPosY , 190, 40, ILI9341_BLUE);
     String str = tk->getFormattedTime();
     tft.fillRect(cursPosX + w, cursPosY , c * 70 - 20, 30, ILI9341_BLACK);
-    tft.print(str);
-    oldTime.set(tk);
+    tft.println(str);
+    if(oldTime.set(tk)){
+        String strD = tk->getFormattedDate();
+        tft.setCursor(cursPosX, cursPosY + 35);
+        tft.setTextSize(2); // set text size
+        tft.print(strD);
+    }
 }
 //------------------------------------------------------------------------
 void loop()
