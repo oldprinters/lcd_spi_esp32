@@ -4,6 +4,7 @@
 #include "NTPClient.h"
 #include <WiFiUdp.h>
 #include "mtime.h"
+#include "Timer.h"
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 3600000);
@@ -13,6 +14,7 @@ int tftDC = 26; // data command select pin
 int tftRST = 25; // reset pin
 
 MTime oldTime;
+Timer* timer;
 //---------------------------------------------
 const char* ssid = "ivanych";
 const char* password = "stroykomitet";
@@ -32,6 +34,7 @@ ILI9341_MAGENTA, ILI9341_YELLOW, ILI9341_WHITE,
 ILI9341_LIGHTGREY};
 String text;
 unsigned int color, chkTime;
+//******************************
 void setup()
 {
     tft.begin(); // initialise screen
@@ -49,7 +52,7 @@ void setup()
     }
     timeClient.begin();
     timeClient.update();
-
+    timer = new Timer(1000);
     // tft.drawRect(0,0,319,239,ILI9341_BLUE); // draw white frame line
     tft.fillRect(0,0,319,239,ILI9341_BLACK);
     // tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
@@ -77,8 +80,11 @@ void outTime(NTPClient *tk){
 void loop()
 {
     // tft.print(timeClient.getFormattedTime());
-    outTime(&timeClient);
-    delay(1000);
+    if(timer->getTimer()){
+        timer->setTimer();
+        outTime(&timeClient);
+    }
+    // delay(1000);
     //  // clear screen apart from frame
     // tft.fillRect(2,2,235,314,ILI9341_BLACK);
     // for (int i=0; i<8; i++) // for each color
