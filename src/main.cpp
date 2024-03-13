@@ -3,6 +3,7 @@
 #include <WiFi.h> // library to connect to Wi-Fi network
 #include "NTPClient.h"
 #include <WiFiUdp.h>
+#include <PubSubClient.h>
 #include "mtime.h"
 #include "Timer.h"
 
@@ -18,7 +19,11 @@ Timer* timer;
 //---------------------------------------------
 const char* ssid = "ivanych";
 const char* password = "stroykomitet";
-WiFiClient client;
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+const char* mqtt_server = "192.168.1.34";
+const char* msgMotion="aisle/motion";
 //---------------------------------------------
 //положение часов
 int cursPosX = 30;
@@ -34,6 +39,51 @@ ILI9341_MAGENTA, ILI9341_YELLOW, ILI9341_WHITE,
 ILI9341_LIGHTGREY};
 String text;
 unsigned int color, chkTime;
+//--------------------------------------
+void callback(char* topic, byte* payload, unsigned int length) {
+  String str = {};
+  String strTopic = topic;
+  String sOut{};
+
+  for (int i = 0; i < length; i++) {
+    str += (char)payload[i];
+  }
+  
+  if(strTopic == msgMotion){
+      tft.setCursor(cursPosX, cursPosY + 80);
+      if(str == "1") {
+        tft.print("*");
+      } else {
+        tft.print("   ");
+      }
+  }
+//    else if(strTopic == msgPressure){
+//       lcd.setCursor(10, 1);
+//       lcd.print(str);
+//   }
+}
+//-----------------------------------
+void reconnect_mqtt() {
+  // Loop until we're reconnected
+  if(!client.connected()) {
+    while (!client.connected()) {
+      Serial.println("Attempting MQTT connection...");
+      String clientId = "Kitchen-Ptr";
+      // Attempt to connect
+      Serial.println(clientId);
+      if (client.connect(clientId.c_str())) {
+        Serial.println("connected");
+        client.subscribe(msgMotion, 0);
+      } else {
+        Serial.print("failed, rc=");
+        Serial.print(client.state());
+        Serial.println(" try again in 5 seconds");
+        // Wait 5 seconds before retrying
+        delay(5000);
+      }
+    }
+  }
+}
 //******************************
 void setup()
 {
@@ -57,6 +107,9 @@ void setup()
     tft.fillRect(0,0,319,239,ILI9341_BLACK);
     // tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
     tft.setTextSize(4); // set text size
+    client.setServer(mqtt_server, 1883);
+    client.setCallback(callback);
+    reconnect_mqtt();
 }
 //------------------------------------------------------------------------
 void outTime(NTPClient *tk){
@@ -86,7 +139,9 @@ void loop()
     if(timer->getTimer()){
         timer->setTimer();
         outTime(&timeClient);
+        reconnect_mqtt();
     }
+    client.loop();
     // delay(1000);
     //  // clear screen apart from frame
     // tft.fillRect(2,2,235,314,ILI9341_BLACK);
