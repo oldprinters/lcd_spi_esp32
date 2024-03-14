@@ -16,6 +16,7 @@ int tftRST = 25; // reset pin
 
 MTime oldTime;
 Timer* timer;
+Timer* tInd;
 //---------------------------------------------
 const char* ssid = "ivanych";
 const char* password = "stroykomitet";
@@ -23,7 +24,8 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 const char* mqtt_server = "192.168.1.34";
-const char* msgMotion="aisle/motion";
+const char* msgMotion = "aisle/motion";
+const char* msgHSMotion = "hall_small/motion";
 //---------------------------------------------
 //положение часов
 int cursPosX = 30;
@@ -48,19 +50,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     str += (char)payload[i];
   }
-  
+
   if(strTopic == msgMotion){
       tft.setCursor(cursPosX, cursPosY + 80);
       if(str == "1") {
         tft.print("*");
       } else {
-        tft.print("   ");
+        tft.fillRect( cursPosX, cursPosY + 80, 27,37, ILI9341_BLACK );  
       }
+  } else if(strTopic == msgHSMotion){
+      tft.setCursor(cursPosX + 50, cursPosY + 80);
+      tft.print("*");
+      tInd->setTimer();
   }
-//    else if(strTopic == msgPressure){
-//       lcd.setCursor(10, 1);
-//       lcd.print(str);
-//   }
 }
 //-----------------------------------
 void reconnect_mqtt() {
@@ -74,6 +76,7 @@ void reconnect_mqtt() {
       if (client.connect(clientId.c_str())) {
         Serial.println("connected");
         client.subscribe(msgMotion, 0);
+        client.subscribe(msgHSMotion, 0);
       } else {
         Serial.print("failed, rc=");
         Serial.print(client.state());
@@ -103,6 +106,7 @@ void setup()
     timeClient.begin();
     timeClient.update();
     timer = new Timer(1000);
+    tInd = new Timer(5000);
     // tft.drawRect(0,0,319,239,ILI9341_BLUE); // draw white frame line
     tft.fillRect(0,0,319,239,ILI9341_BLACK);
     // tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
@@ -140,6 +144,8 @@ void loop()
         timer->setTimer();
         outTime(&timeClient);
         reconnect_mqtt();
+        if(tInd->getTimer())
+          tft.fillRect( cursPosX + 50, cursPosY + 80, 27,37, ILI9341_BLACK );
     }
     client.loop();
     // delay(1000);
