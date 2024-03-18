@@ -28,7 +28,7 @@ bool MTime::set(NTPClient *tC){
 }
 //---------------------------
 uint16_t MTime::getColorTime(){
-    uint16_t res = 0xFFBB;
+    uint16_t res = 0xBBBB;
     if((h > 5) && (h < 23)){
         res = 0xFFFF;
     } 
