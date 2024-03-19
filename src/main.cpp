@@ -6,6 +6,11 @@
 #include <PubSubClient.h>
 #include "mtime.h"
 #include "Timer.h"
+#include <Wire.h>
+#include <VL53L1X.h>
+
+VL53L1X sensor;
+Timer* timer53L1;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 3600000);
@@ -22,6 +27,8 @@ const char* ssid = "ivanych";
 const char* password = "stroykomitet";
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+const char* msg_lidar= "kitcen/lidar";
 
 const char* mqtt_server = "192.168.1.34";
 const char* msgMotion = "aisle/motion";
@@ -95,8 +102,31 @@ void setup()
     // tft.fillScreen(ILI9341_BLACK);
     tft.fillRect(0,0, 319, 239, ILI9341_BLACK);
 
-    // tft.fillScreen(ILI9341_BLACK); // fill screen in black
-    Serial.begin(115200); // Serial Monitor baud rate
+    Serial.begin(115200);
+    Wire.begin();
+    Wire.setClock(400000); // use 400 kHz I2C
+
+    sensor.setTimeout(500);
+    if (!sensor.init())
+    {
+      Serial.println("Failed to detect and initialize sensor!");
+      while (1);
+    }
+
+    // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
+    // You can change these settings to adjust the performance of the sensor, but
+    // the minimum timing budget is 20 ms for short distance mode and 33 ms for
+    // medium and long distance modes. See the VL53L1X datasheet for more
+    // information on range and timing limits.
+    sensor.setDistanceMode(VL53L1X::Long);
+    sensor.setMeasurementTimingBudget(50000);
+    sensor.setROISize(16, 16);
+
+    // Start continuous readings at a rate of one measurement every 50 ms (the
+    // inter-measurement period). This period should be at least as long as the
+    // timing budget.
+    sensor.startContinuous(50);
+
     WiFi.begin(ssid, password); // initialise Wi-Fi and wait
     tft.print("Connecting...");
     while (WiFi.status() != WL_CONNECTED){
@@ -107,6 +137,7 @@ void setup()
     timeClient.update();
     timer = new Timer(1000);
     tInd = new Timer(5000);
+    timer53L1 = new Timer(500);
     // tft.drawRect(0,0,319,239,ILI9341_BLUE); // draw white frame line
     tft.fillRect(0,0,319,239,ILI9341_BLACK);
     // tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
@@ -131,10 +162,17 @@ void outTime(NTPClient *tk){
         String strD = tk->getFormattedDate();
         tft.setCursor(cursPosX, cursPosY + 35);
         tft.setTextSize(2); // set text size
-        tft.setTextColor(oldTime.getColorTime());
+        tft.setTextColor(oldTime.getColorTime(tk));
         tft.fillRect(cursPosX, cursPosY + 35, 240, 20, ILI9341_BLACK);
         tft.print(strD);
     }
+}
+//------------------------------------------------------------------------
+void outLidar(int16_t mm){
+    tft.setCursor(cursPosX, cursPosY+ 110);
+    tft.setTextSize(3); // set text size
+    tft.fillRect(cursPosX, cursPosY + 110 , 200, 30, ILI9341_BLACK);
+    tft.println(mm);
 }
 //------------------------------------------------------------------------
 void loop()
@@ -148,6 +186,25 @@ void loop()
           tft.fillRect( cursPosX + 50, cursPosY + 80, 27,37, ILI9341_BLACK );
     }
     client.loop();
+
+    if(timer53L1->getTimer()){
+      timer53L1->setTimer();
+      sensor.read();
+      if(sensor.ranging_data.range_status == VL53L1X::RangeStatus::RangeValid){
+          client.publish(msg_lidar, String(sensor.ranging_data.range_mm).c_str());
+          outLidar(sensor.ranging_data.range_mm);
+          // Serial.print("range: ");
+          // Serial.print(sensor.ranging_data.range_mm);
+          // Serial.print("\tstatus: ");
+          // Serial.print(VL53L1X::rangeStatusToString(sensor.ranging_data.range_status));
+          // Serial.print("\tpeak signal: ");
+          // Serial.print(sensor.ranging_data.peak_signal_count_rate_MCPS);
+          // Serial.print("\tambient: ");
+          // Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
+          // Serial.println();
+      }
+    }
+
     // delay(1000);
     //  // clear screen apart from frame
     // tft.fillRect(2,2,235,314,ILI9341_BLACK);

@@ -19,7 +19,7 @@ class MTime{
     };
     int16_t compare(NTPClient *tC);
     bool set(NTPClient *tC);
-    uint16_t getColorTime();
+    uint16_t getColorTime(NTPClient *tk);
     uint16_t getColorDate();
 };
 
