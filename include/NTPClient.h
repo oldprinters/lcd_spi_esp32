@@ -81,6 +81,10 @@ class NTPClient {
     * @return secs argument (or 0 for current time) formatted like `hh:mm:ss`
     */
     String getFormattedTime(unsigned long secs = 0);
+    String getFormattedSec();
+    String getFormattedHM();
+    String getFormattedH();
+    String getFormattedM();
 
     /**
      * @return time in seconds since Jan. 1, 1970

@@ -165,6 +165,39 @@ String NTPClient::getFormattedTime(unsigned long secs) {
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }
+//********************************************************************
+String NTPClient::getFormattedHM() {
+  unsigned long rawTime = this->getEpochTime();
+  unsigned long hours = (rawTime % 86400L) / 3600;
+  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+
+  unsigned long minutes = (rawTime % 3600) / 60;
+  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+
+  return hoursStr + ":" + minuteStr;
+}
+//********************************************************************
+String NTPClient::getFormattedH() {
+  unsigned long rawTime = this->getEpochTime();
+  unsigned long hours = (rawTime % 86400L) / 3600;
+  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+  return hoursStr;
+}
+//********************************************************************
+String NTPClient::getFormattedM() {
+  unsigned long rawTime = this->getEpochTime();
+  unsigned long minutes = (rawTime % 3600) / 60;
+  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+  return minuteStr;
+}
+//*********************************************************************
+String NTPClient::getFormattedSec() {
+  unsigned long rawTime = this->getEpochTime();
+  unsigned long seconds = rawTime % 60;
+  String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
+
+  return secondStr;
+}
 
 // Based on https://github.com/PaulStoffregen/Time/blob/master/Time.cpp
 // currently assumes UTC timezone, instead of using this->_timeOffset

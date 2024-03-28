@@ -21,6 +21,7 @@ class MTime{
     bool set(NTPClient *tC);
     uint16_t getColorTime(NTPClient *tk);
     uint16_t getColorDate();
+    uint16_t getDay(){return d;}
 };
 
 

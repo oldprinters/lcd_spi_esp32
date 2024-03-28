@@ -6,11 +6,11 @@ int16_t MTime::compare(NTPClient *tC){
     int16_t ts = tC->getSeconds();
     int16_t rez = 0;
     if(th != h){
-        rez = 3;
+        rez = 1;
     }else if(tm != m) {
         rez = 2;
     }else if(ts != s){
-        rez = 1;
+        rez = 3;
     }
     return rez;
 }
@@ -22,13 +22,17 @@ bool MTime::set(NTPClient *tC){
     s = tC->getSeconds();
 
     res = ((h + m + s) == 0) || (!dateSet);
-    if(res)d = tC -> getDay();
+    
+    if(res){
+        d = tC -> getDay();
+        d = ( d == 0? 7: d);
+    }
     dateSet = 1;
     return res;
 }
 //---------------------------
 uint16_t MTime::getColorTime(NTPClient *tk){
-    uint16_t res = 0xBBBB;
+    uint16_t res = 0x7BEF;
     h = tk->getHours();
     m = tk->getMinutes();
     s = tk->getSeconds();
