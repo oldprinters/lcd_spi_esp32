@@ -6,6 +6,8 @@
 #include <PubSubClient.h>
 #include "mtime.h"
 #include "Timer.h"
+#include "IndMsg.h"
+#include "movestat.h"
 #include <Wire.h>
 #include <VL53L1X.h>
 #include <BH1750.h> 
@@ -24,7 +26,6 @@ const int tftRST = 25; // reset pin
 
 const int16_t pinMove = 27;
 volatile bool motion{0};  //признак изменения движения
-int16_t movStat{0}; //состояние объектов
 
 MTime oldTime;
 Timer* timer;
@@ -36,9 +37,8 @@ const char* ssid = "ivanych";
 const char* password = "stroykomitet";
 WiFiClient espClient;
 PubSubClient client(espClient);
-
+//---------------------------------------------
 const char* msg_lidar= "kitcen/lidar";
-
 const char* mqtt_server = "192.168.1.34";
 const char* msgMotion = "aisle/motion";
 const char* msgHSMotion = "hall_small/motion";
@@ -83,6 +83,9 @@ unsigned int colors[ ] = // color codes
 uint16_t nColor{0};
 // {ILI9341_BLACK, ILI9341_WHITE, ILI9341_LIGHTGREY, ILI9341_CYAN, ILI9341_BLUE, ILI9341_GREEN, ILI9341_MAGENTA, ILI9341_YELLOW, ILI9341_ORANGE, ILI9341_RED};
 unsigned int color, chkTime;
+//---------------------------------------------
+MoveStat moveStat(700);
+IndMsg indMsg(&tft);
 //--------------------------------------
 uint16_t getColorTemper(String str){
   uint16_t colorTemper = ILI9341_WHITE;
@@ -243,6 +246,8 @@ void setup()
     }
 
     attachInterrupt(digitalPinToInterrupt(pinMove), moving, CHANGE);
+
+    moveStat.setDt(1500);
 }
 //------------------------------------------------------------------------
 void outTime(NTPClient *tk){
@@ -301,7 +306,7 @@ int16_t motion_func(){
   if(motion){
     res = true;
     motion = false;
-    movStat = digitalRead(pinMove);
+    moveStat.setMotion(digitalRead(pinMove));
   }
   return res;
 }
@@ -346,4 +351,8 @@ void loop()
       // lcd.print(String(lux));
     }
     motion_func();  //проверка движения
+    if(moveStat.cycle()){
+      indMsg.set();
+    }
+    indMsg.cycle();
 }
