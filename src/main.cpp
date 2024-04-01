@@ -8,6 +8,8 @@
 #include "Timer.h"
 #include "IndMsg.h"
 #include "movestat.h"
+#include "managerLed.h"
+#include "OneLed.h"
 #include <Wire.h>
 #include <VL53L1X.h>
 #include <BH1750.h> 
@@ -47,6 +49,19 @@ const char* msgPressure="balcony/pressure";
 //---------------------------------------------
 BH1750 lightMeter(0x23);  //0x5c
 float lux{};  //яркость света в помещении
+//--------------------------------------------- кнопки
+const int16_t pinBut1{34};
+const int16_t pinBut2{35};
+volatile int16_t buttonStatus_1{0}, ft_1{0}, ft_1_dr{0}, nClickBut_1{0};
+volatile int16_t buttonStatus_2{0}, ft_2{0}, ft_2_dr{0}, nClickBut_2{0};
+const int drDelay{250};
+const int pauseDelay{2000};
+int16_t ft_1_pause{0};
+Timer tButt_1(1000);
+Timer tDrebezg_1(drDelay);
+Timer tPause_1(pauseDelay);
+Timer tButt_2(1000);
+Timer tDrebezg_2(drDelay);
 //---------------------------------------------
 //положение часов
 const int16_t cursPosX = 2;
@@ -84,8 +99,33 @@ uint16_t nColor{0};
 // {ILI9341_BLACK, ILI9341_WHITE, ILI9341_LIGHTGREY, ILI9341_CYAN, ILI9341_BLUE, ILI9341_GREEN, ILI9341_MAGENTA, ILI9341_YELLOW, ILI9341_ORANGE, ILI9341_RED};
 unsigned int color, chkTime;
 //---------------------------------------------
+const int16_t pinLed{32};
 MoveStat moveStat(700);
 IndMsg indMsg(&tft);
+// OneLed light_1(pinLed, 0, 250);
+ManagerLed light_1(pinLed, 0, 25);
+//*********************************************
+void IRAM_ATTR button_interr_1(){ //IRAM_ATTR
+    detachInterrupt(pinBut1);
+  ft_1_dr = 2;
+  if(!ft_1){
+    ft_1 = 3;
+    nClickBut_1 = 1;
+  } else if(ft_1 == 2){
+    nClickBut_1++;
+  }
+}
+//*********************************************
+void IRAM_ATTR button_interr_2(){ //IRAM_ATTR
+    detachInterrupt(pinBut2);
+  ft_2_dr = 2;
+  if(!ft_2){
+    ft_2 = 3;
+    nClickBut_2 = 1;
+  } else if(ft_2 == 2){
+    nClickBut_2++;
+  }
+}
 //--------------------------------------
 uint16_t getColorTemper(String str){
   uint16_t colorTemper = ILI9341_WHITE;
@@ -187,6 +227,7 @@ void IRAM_ATTR moving(){
 void setup()
 {
     pinMode(pinMove, INPUT);
+    light_1.setStat(StatLed::OFF);
 
     tft.begin(); // initialise screen
     tft.setRotation(0); // portrait, connections at top
@@ -246,6 +287,8 @@ void setup()
     }
 
     attachInterrupt(digitalPinToInterrupt(pinMove), moving, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(pinBut1), button_interr_1, FALLING);
+    attachInterrupt(digitalPinToInterrupt(pinBut2), button_interr_2, FALLING);
 
     moveStat.setDt(1500);
 }
@@ -331,8 +374,14 @@ void loop()
       timer53L1->setTimer();
       sensor.read();
       if(sensor.ranging_data.range_status == VL53L1X::RangeStatus::RangeValid){
-          client.publish(msg_lidar, String(sensor.ranging_data.range_mm).c_str());
-          outLidar(sensor.ranging_data.range_mm);
+          // client.publish(msg_lidar, String(sensor.ranging_data.range_mm).c_str());
+          // if(sensor.ranging_data.range_mm < 1800){
+            outLidar(sensor.ranging_data.range_mm);//sensor.ranging_data.range_mm);
+            // light_1.setDim((1800 - sensor.ranging_data.range_mm) / 10);
+          //   light_1.setMaxLevel((2500 - sensor.ranging_data.range_mm) / 10);
+          // } else {
+          //   light_1.setMaxLevel(5);
+          // }
           // Serial.print("range: ");
           // Serial.print(sensor.ranging_data.range_mm);
           // Serial.print("\tstatus: ");
@@ -355,4 +404,60 @@ void loop()
       indMsg.set();
     }
     indMsg.cycle();
+  //---------------------
+  if(ft_1 == 3){
+    tButt_1.setTimer();
+    ft_1 = 2;
+  }
+  if( ft_1_dr == 2 ){
+    tDrebezg_1.setTimer();
+    ft_1_dr = 1;
+  }
+  if( ( ft_1_dr == 1 ) && tDrebezg_1.getTimer() ){
+    ft_1_dr = 0;
+    attachInterrupt(digitalPinToInterrupt(pinBut1), button_interr_1, FALLING);
+  }
+  if( ( ft_1_pause == 1 ) && tPause_1.getTimer() ){
+    ft_1_pause = 0;
+    attachInterrupt(digitalPinToInterrupt(pinBut1), button_interr_1, FALLING);
+  }
+
+  if(ft_1 == 2 && tButt_1.getTimer()){
+    int16_t i = digitalRead(pinBut1);
+    Serial.print(i == 0? "Long ": "Short ");
+    Serial.print("nCount = ");
+    Serial.println(nClickBut_1);
+    ft_1 = 0;
+    ft_1_pause = 1;
+    tPause_1.setTimer();
+    detachInterrupt(pinBut1);
+    light_1.clickBut(0, i, nClickBut_1);
+  }
+  //---------------------
+  if(ft_2 == 3){
+    tButt_2.setTimer();
+    ft_2 = 2;
+  }
+  if( ft_2_dr == 2 ){
+    tDrebezg_2.setTimer();
+    ft_2_dr = 1;
+  }
+  if( ( ft_2_dr == 1 ) && tDrebezg_2.getTimer() ){
+    ft_2_dr = 0;
+    attachInterrupt(digitalPinToInterrupt(pinBut2), button_interr_2, FALLING);
+  }
+
+  if(ft_2 == 2 && tButt_2.getTimer()){
+    int16_t i = digitalRead(pinBut2);
+    Serial.print("Button 2:  ");
+    Serial.print(i == 0? "Long ": "Short ");
+    Serial.print("nCount = ");
+    Serial.println(nClickBut_2);
+    ft_2 = 0;
+    ft_2_dr = 1;
+    tDrebezg_2.setTimer();
+    detachInterrupt(pinBut2);
+    light_1.setNightLevel();
+  }
+  light_1.cycle();
 }
