@@ -2,10 +2,10 @@
 #define MANAGERLED_H
 #include "OneLed.h"
 
-// enum class Status { OFF, ON };
+enum class Status { OFF, ON, AUTO };
 
 class ManagerLed: public OneLed {
-    // Status stat{Status::OFF};
+    Status stat{Status::OFF};
     // int16_t dim{0};
     int16_t lux{0};         //освещённость
     bool movement{false};   //движение
