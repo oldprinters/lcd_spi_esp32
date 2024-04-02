@@ -73,9 +73,7 @@ void OneLed::setStat(StatLed stat) {
 	statLed = stat; 
 	switch (statLed) {
 		case StatLed::OFF:levelDim = 0; break;
-		case StatLed::BLINK:
 		case StatLed::ON:levelDim = maxLevel; break;
-		case StatLed::DIM:break;
 	}
 }
 //*************************************

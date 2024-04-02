@@ -10,7 +10,7 @@
 // 	#include "WProgram.h"
 // #endif
 #define TIMER_T 8
-enum class StatLed { OFF, ON, BLINK, DIM };
+enum class StatLed { OFF, ON };
 enum class StatPower { OFF, ON, MOVE, PAUSE_OFF, DIST };
 
 class OneLed:	public Timer
