@@ -30,6 +30,7 @@ public:
 	OneLed(int p);
 	OneLed(int p, int ch);
 	OneLed(int p, int ch, int medium);
+	OneLed(int p, int ch, int medium, int nLevel);
 	int getPin() { return pin; }
 	StatLed getStat(){return statLed;}
 	void setStat(StatLed stat);

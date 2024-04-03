@@ -16,6 +16,7 @@ public:
 	ManagerLed(int p, int ch, int medium): OneLed(p, ch, medium){};
     int16_t clickBut(int16_t nBut, bool longClick, int16_t nClick); //обработка события click
     int16_t triggerAuto();
+    // void lidarOn
 };
 
 #endif // MANAGERLED_H

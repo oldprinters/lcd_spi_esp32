@@ -94,7 +94,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(tftCS, tftDC, tftRST);
 #define TFT_YELLOW 0x07FF
 #define TFT_ORANGE 0x3FF
 unsigned int colors[ ] = // color codes
-{TFT_WHITE, TFT_CYAN, TFT_GREEN, TFT_TURQUOISE};
+{TFT_WHITE, TFT_CYAN, TFT_WHITE, TFT_GREEN, TFT_WHITE, TFT_TURQUOISE, TFT_WHITE, TFT_GREEN};
 uint16_t nColor{0};
 // {ILI9341_BLACK, ILI9341_WHITE, ILI9341_LIGHTGREY, ILI9341_CYAN, ILI9341_BLUE, ILI9341_GREEN, ILI9341_MAGENTA, ILI9341_YELLOW, ILI9341_ORANGE, ILI9341_RED};
 unsigned int color, chkTime;
@@ -209,6 +209,9 @@ void reconnect_mqtt() {
         client.subscribe(msgTemper, 0);
         client.subscribe(msgPressure, 0);
       } else {
+        tft.setCursor(cursPosX, cursPosY);
+        tft.fillRect(cursPosX, cursPosY, 200, hSigns + 1, TFT_BLACK);
+        tft.print("Check the server MQTT.");
         Serial.print("failed, rc=");
         Serial.print(client.state());
         Serial.println(" try again in 5 seconds");
@@ -272,7 +275,7 @@ void setup()
     tHeard = new Timer(500);
     timer53L1 = new Timer(500);
     // tft.drawRect(0,0,319,239,ILI9341_BLUE); // draw white frame line
-    tft.fillRect(0,0,319,239,ILI9341_BLACK);
+    tft.fillRect(0,0,319,239,TFT_BLACK);
     // tft.drawRect(1,1,237,317,ILI9341_RED); // and second frame line
     // tft.setTextSize(4); // set text size
     client.setServer(mqtt_server, 1883);
@@ -306,14 +309,16 @@ void outTime(NTPClient *tk){
     // tft.setTextColor(ILI9341_WHITE);
     int16_t w = (c - 1) * (wSigns + dt);
     tft.setFont(&FreeMono24pt7b);
-    tft.fillRect(cursPosX + w, 4, 319 - cursPosX - w, hSigns + 1, TFT_BLACK);
 
     switch(c){
       case 1: tft.setCursor(cursPosX, cursPosY);
+        tft.fillRect(cursPosX, 4, wSigns + 10, hSigns + 1, TFT_BLACK);
         tft.print(strH);
       case 2: tft.setCursor(cursPosX + wSigns + dt, cursPosY);
+        tft.fillRect(cursPosX + wSigns + dt, 4, wSigns + 10, hSigns + 1, TFT_BLACK);
         tft.print(strM);
       case 3: tft.setCursor(cursPosX + (wSigns + dt) * 2, cursPosY);
+        tft.fillRect(cursPosX + (wSigns + dt) * 2, 24, wSigns, hSigns - 20, TFT_BLACK);
         tft.setTextSize(1); // set text size
         tft.println(strSec);
         break;

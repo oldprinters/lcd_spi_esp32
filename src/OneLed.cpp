@@ -18,6 +18,12 @@
 		ledcSetup(ledChannel, freq, resolution);
 		ledcAttachPin(pin, ledChannel);
 	}
+//***********************************************
+	OneLed::OneLed(int p, int ch, int medium, int nLevel): Timer(TIMER_T), pin(p), ledChannel(ch), mediumLevel(medium), nightLevel{nLevel} { 
+		pinMode(pin, OUTPUT); 
+		ledcSetup(ledChannel, freq, resolution);
+		ledcAttachPin(pin, ledChannel);
+	}
 //*************************************************
 void OneLed::setDim(int l) {
 	levelDim = l;	// < levelDim ? l : levelDim; 

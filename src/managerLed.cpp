@@ -2,19 +2,23 @@
 
 //-------------------------------------------
 int16_t ManagerLed::triggerAuto(){
+    Serial.println(static_cast<int16_t>(stat));
     switch(stat){
+        case Status::ON: 
         case Status::OFF: stat = Status::AUTO;
-            this->setStat(StatLed::ON);
-            this->setMediumLevel();
+            OneLed::setStat(StatLed::ON);
+            OneLed::setMediumLevel();
             break;
-        case Status::ON: break;
-        case Status::AUTO: break;
+        case Status::AUTO: stat = Status::OFF;
+            OneLed::setOff();
+            break;
     }
+    return static_cast<int16_t>(stat);
 }
 //-------------------------------------------
-int16_t ManagerLed::clickBut(int16_t nBut, bool longClick, int16_t nClick){
+int16_t ManagerLed::clickBut(int16_t nBut, bool shortClick, int16_t nClick){
     if(nBut == 0){
-        if(!longClick){
+        if(!shortClick){
             toggleMax();
         } else {
             switch(nClick){
