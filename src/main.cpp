@@ -168,7 +168,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if(str == "1") {
       tft.print("V");
     } else {
-      tft.fillRect( cursPosX, cursPosY + sdvY, 30,37, ILI9341_BLACK );  
+      tft.fillRect( cursPosX, cursPosY + sdvY, 30,37, TFT_BLACK );  
     }
   } else if(strTopic == msgHSMotion){
     tft.setTextColor(TFT_ORANGE);
@@ -305,16 +305,20 @@ void outTime(NTPClient *tk){
     String strSec = tk->getFormattedSec();
     // tft.setTextColor(ILI9341_WHITE);
     int16_t w = (c - 1) * (wSigns + dt);
+    tft.setFont(&FreeMono24pt7b);
     tft.fillRect(cursPosX + w, 4, 319 - cursPosX - w, hSigns + 1, TFT_BLACK);
 
-    tft.setFont(&FreeMono24pt7b);
-    tft.setCursor(cursPosX, cursPosY);
-    tft.print(strH);
-    tft.setCursor(cursPosX + wSigns + dt, cursPosY);
-    tft.print(strM);
-    tft.setCursor(cursPosX + (wSigns + dt) * 2, cursPosY);
-    tft.setTextSize(1); // set text size
-    tft.println(strSec);
+    switch(c){
+      case 1: tft.setCursor(cursPosX, cursPosY);
+        tft.print(strH);
+      case 2: tft.setCursor(cursPosX + wSigns + dt, cursPosY);
+        tft.print(strM);
+      case 3: tft.setCursor(cursPosX + (wSigns + dt) * 2, cursPosY);
+        tft.setTextSize(1); // set text size
+        tft.println(strSec);
+        break;
+    }
+
     tft.setFont();
     // tft.drawCircle( 130, 50, 5, TFT_WHITE);
     tft.fillCircle( pointHM, cursPosY, 3, colors[nColor++]);
