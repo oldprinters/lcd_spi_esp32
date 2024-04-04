@@ -100,7 +100,6 @@ uint16_t nColor{0};
 unsigned int color, chkTime;
 //---------------------------------------------
 const int16_t pinLed{32};
-MoveStat moveStat(700);
 IndMsg indMsg(&tft);
 // OneLed light_1(pinLed, 0, 250);
 ManagerLed light_1(pinLed, 0, 25);
@@ -128,12 +127,12 @@ void IRAM_ATTR button_interr_2(){ //IRAM_ATTR
 }
 //--------------------------------------
 uint16_t getColorTemper(String str){
-  uint16_t colorTemper = ILI9341_WHITE;
+  uint16_t colorTemper = TFT_WHITE;
       double dTemper = std::stod(str.c_str());
       if(dTemper < -8) colorTemper = TFT_BLUE;  //синий
       else if(dTemper < -5) colorTemper = TFT_CYAN; //голубой
-      else if(dTemper < 0) colorTemper = TFT_CYAN; //голубой
-      else if(dTemper < 10) colorTemper = 0xFFF0;  //белый
+      else if(dTemper < 0) colorTemper = TFT_GRAY; //
+      else if(dTemper < 10) colorTemper = 0xFFF0;  //
       else if(dTemper < 20) colorTemper = TFT_YELLOW; //желтый
       else if(dTemper < 28) colorTemper = TFT_ORANGE;  //оранжевый
       else colorTemper = TFT_RED; //красный
@@ -230,7 +229,6 @@ void IRAM_ATTR moving(){
 void setup()
 {
     pinMode(pinMove, INPUT);
-    light_1.setStat(StatLed::OFF);
 
     tft.begin(); // initialise screen
     tft.setRotation(0); // portrait, connections at top
@@ -261,6 +259,7 @@ void setup()
     // inter-measurement period). This period should be at least as long as the
     // timing budget.
     sensor.startContinuous(50);
+    light_1.linkLidar(&sensor);
 
     WiFi.begin(ssid, password); // initialise Wi-Fi and wait
     tft.print("Connecting...");
@@ -293,7 +292,6 @@ void setup()
     attachInterrupt(digitalPinToInterrupt(pinBut1), button_interr_1, FALLING);
     attachInterrupt(digitalPinToInterrupt(pinBut2), button_interr_2, FALLING);
 
-    moveStat.setDt(1500);
 }
 //------------------------------------------------------------------------
 void outTime(NTPClient *tk){
@@ -342,7 +340,7 @@ void outTime(NTPClient *tk){
     }
 }
 //------------------------------------------------------------------------
-void outLidar(int16_t mm){
+void outLidar(Adafruit_ILI9341& tft, int16_t mm){
     tft.setCursor(cursPosX, lidarPosY);
     tft.setTextSize(2); // set text size
     tft.setTextColor(TFT_TURQUOISE);
@@ -358,7 +356,7 @@ int16_t motion_func(){
   if(motion){
     res = true;
     motion = false;
-    moveStat.setMotion(digitalRead(pinMove));
+    light_1.setMotion(digitalRead(pinMove));
   }
   return res;
 }
@@ -383,14 +381,7 @@ void loop()
       timer53L1->setTimer();
       sensor.read();
       if(sensor.ranging_data.range_status == VL53L1X::RangeStatus::RangeValid){
-          // client.publish(msg_lidar, String(sensor.ranging_data.range_mm).c_str());
-          // if(sensor.ranging_data.range_mm < 1800){
-            outLidar(sensor.ranging_data.range_mm);//sensor.ranging_data.range_mm);
-            // light_1.setDim((1800 - sensor.ranging_data.range_mm) / 10);
-          //   light_1.setMaxLevel((2500 - sensor.ranging_data.range_mm) / 10);
-          // } else {
-          //   light_1.setMaxLevel(5);
-          // }
+          outLidar(tft, sensor.ranging_data.range_mm);//sensor.ranging_data.range_mm);
           // Serial.print("range: ");
           // Serial.print(sensor.ranging_data.range_mm);
           // Serial.print("\tstatus: ");
@@ -400,20 +391,22 @@ void loop()
           // Serial.print("\tambient: ");
           // Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
           // Serial.println();
+      } else {
+        //объект отсутствует
       }
     }
     //....... измерение освещённости
     if (lightMeter.measurementReady()) {
-      // lcd.setCursor(10, 1);
       lux = lightMeter.readLightLevel();
-      // lcd.print(String(lux));
+      light_1.setLux(lux);
     }
     motion_func();  //проверка движения
-    if(moveStat.cycle()){
+    light_1.cycle();
+    if(light_1.getStat()){
       indMsg.set();
     }
     indMsg.cycle();
-  //---------------------
+  //--------------------- BUTTONS
   if(ft_1 == 3){
     tButt_1.setTimer();
     ft_1 = 2;
@@ -466,7 +459,5 @@ void loop()
     ft_2_dr = 1;
     tDrebezg_2.setTimer();
     detachInterrupt(pinBut2);
-    light_1.setNightLevel();
   }
-  light_1.cycle();
 }

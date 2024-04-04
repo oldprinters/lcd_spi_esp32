@@ -1,5 +1,25 @@
 #include "managerLed.h"
-
+//------------------------------------------------
+MoveStat* newMS(){
+    MoveStat* moveStat = new MoveStat();
+    moveStat -> setDt(1500);
+    return moveStat;
+}
+//_____-------------------------------------------
+ManagerLed::ManagerLed(int8_t p):OneLed(p){
+    moveStat = newMS();
+}
+ManagerLed::ManagerLed(int8_t p, int8_t ch): OneLed(p, ch){
+    moveStat = newMS();
+}
+ManagerLed::ManagerLed(int8_t p, int8_t ch, int8_t medium): OneLed(p, ch, medium){
+    moveStat = newMS();
+}
+//------------------------------------------------
+void ManagerLed::linkLidar(VL53L1X* pS){
+    if(pS != nullptr)
+        pSensor = pS;
+}
 //-------------------------------------------
 int16_t ManagerLed::triggerAuto(){
     Serial.println(static_cast<int16_t>(stat));
@@ -31,4 +51,46 @@ int16_t ManagerLed::clickBut(int16_t nBut, bool shortClick, int16_t nClick){
         //пока мыслей нет
     }
     return 1;//this->getStat() == 1;
+}
+//-------------------------------------------------------
+//если появился объект, то в режиме AUTO включается свет
+void ManagerLed::setLidar(int16_t mm){
+    //presence
+    bool pr = mm < 1800? true: false;
+    if(pr != presence){
+        presence = pr;
+        if(presence){
+            if(stat == Status::AUTO && !light){
+                OneLed::setStat(StatLed::ON);
+                OneLed::setMediumLevel();
+            }
+        } else {
+            //???????
+        }
+    }
+}
+//---------------------------------------------
+void ManagerLed::setMotion(bool st){
+    moveStat -> setMotion(st);
+    if( moveStat -> getStat() ){
+        if(stat == Status::AUTO && !light){
+            OneLed::setStat(StatLed::ON);
+            OneLed::setMediumLevel();
+        }
+    } else {
+        if((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid){
+            OneLed::setStat(StatLed::OFF);
+        }
+    }
+}
+//-------------------------------------
+void ManagerLed::cycle(){
+    OneLed::cycle();
+    bool stat = moveStat->cycle();
+}
+//----------------------------------------------------
+bool ManagerLed::getStat(){
+    bool res = (stat == Status::ON) 
+        || ((stat == Status::AUTO) && (OneLed::getStat() == StatLed::ON));
+    return res;
 }

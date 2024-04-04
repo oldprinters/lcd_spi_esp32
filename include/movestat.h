@@ -13,6 +13,7 @@ class MoveStat:Timer {
     MoveStat():Timer(FOLLOW_ME_TIME){};
     MoveStat(uint16_t ml):Timer(FOLLOW_ME_TIME), maxLength(ml){};
     MoveStat(uint32_t dt, uint16_t ml):Timer(dt), maxLength(ml){};
+    bool getStat(){return stat;}
     void setML(uint16_t ml){maxLength = ml;}
     void setMotion(bool st);
     int16_t cycle();

@@ -13,7 +13,7 @@
 enum class StatLed { OFF, ON };
 enum class StatPower { OFF, ON, MOVE, PAUSE_OFF, DIST };
 
-class OneLed:	public Timer
+class OneLed: public Timer
 {
 	const int pin;
 	int level { 0 };
