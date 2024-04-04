@@ -29,7 +29,7 @@ public:
     void setLux(float l){lux = l; light = lux < LEVEL_LIGHT? false: true;}
     void setLidar(int16_t mm);
     void setMotion(bool st);
-    void cycle();
+    bool cycle();
     // void lidarOn
 };
 

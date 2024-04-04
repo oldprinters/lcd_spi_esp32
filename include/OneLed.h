@@ -44,7 +44,7 @@ public:
 	void setDim(int l);
 	void setMaxLevel(int i);
 	int getMaxLevel(){return maxLevel;}
-	virtual void cycle();
+	virtual bool cycle();
 	int arDt[5]={ 1, 1, 2, 3, 5};
 };
 

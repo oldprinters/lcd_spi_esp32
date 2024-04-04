@@ -79,14 +79,20 @@ void ManagerLed::setMotion(bool st){
         }
     } else {
         if((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid){
-            OneLed::setStat(StatLed::OFF);
+            if(stat == Status::AUTO){
+                OneLed::setStat(StatLed::OFF);
+            }
         }
     }
 }
 //-------------------------------------
-void ManagerLed::cycle(){
+bool ManagerLed::cycle(){
     OneLed::cycle();
-    bool stat = moveStat->cycle();
+    bool res = moveStat->cycle();
+    if( (res == 0) && ((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid)){
+        OneLed::setStat(StatLed::OFF);
+    }
+    return res;
 }
 //----------------------------------------------------
 bool ManagerLed::getStat(){

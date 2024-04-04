@@ -401,10 +401,13 @@ void loop()
       light_1.setLux(lux);
     }
     motion_func();  //проверка движения
-    light_1.cycle();
-    if(light_1.getStat()){
+    // light_1.cycle();
+    if(light_1.cycle()){
       indMsg.set();
     }
+    // if(light_1.getStat()){
+    //   indMsg.set();
+    // }
     indMsg.cycle();
   //--------------------- BUTTONS
   if(ft_1 == 3){

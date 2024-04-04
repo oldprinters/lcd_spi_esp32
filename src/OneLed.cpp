@@ -83,7 +83,7 @@ void OneLed::setStat(StatLed stat) {
 	}
 }
 //*************************************
-void OneLed::cycle() {
+bool OneLed::cycle() {
 	if (level != levelDim) {
 		if (getTimer()) {
 			setTimer();
@@ -92,6 +92,9 @@ void OneLed::cycle() {
 			level += (level < levelDim? dt: -1 * dt);
 		}
 		ledcWrite(ledChannel, level); //29.06.23 ptr
+		return true;
+	} else {
+		return false;
 	}
 }
 //======================================
