@@ -56,7 +56,7 @@ int16_t ManagerLed::clickBut(int16_t nBut, bool shortClick, int16_t nClick){
 //если появился объект, то в режиме AUTO включается свет
 void ManagerLed::setLidar(int16_t mm){
     //presence
-    bool pr = mm < 1800? true: false;
+    bool pr = mm < MAX_LENGTH? true: false;
     if(pr != presence){
         presence = pr;
         if(presence){
@@ -73,7 +73,7 @@ void ManagerLed::setLidar(int16_t mm){
 void ManagerLed::setMotion(bool st){
     moveStat -> setMotion(st);
     if( moveStat -> getStat() ){
-        if(stat == Status::AUTO && !light){
+        if(stat == Status::AUTO && !light && (OneLed::getStat() == StatLed::OFF)){
             OneLed::setStat(StatLed::ON);
             OneLed::setMediumLevel();
         }
@@ -87,9 +87,10 @@ void ManagerLed::setMotion(bool st){
 }
 //-------------------------------------
 bool ManagerLed::cycle(){
-    OneLed::cycle();
-    bool res = moveStat->cycle();
-    if( (res == 0) && ((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid)){
+    OneLed::cycle();    //текущее состояние
+    bool res = moveStat->cycle();   //наличие движения
+    if( (res == 0) && (((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid) ||
+    ((*pSensor).ranging_data.range_mm > MAX_LENGTH))){
         OneLed::setStat(StatLed::OFF);
     }
     return res;

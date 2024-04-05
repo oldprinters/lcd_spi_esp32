@@ -2,13 +2,14 @@
 #define MOVESTAT_H
 #include "Timer.h"
 #define FOLLOW_ME_TIME 10000
+const int16_t MAX_LENGTH {1700};
 
 class MoveStat:Timer {
     bool moving{0};
     bool stat{0};
     bool statOld{0};
     bool wait{0};   //ожидание перед выключением
-    uint16_t maxLength{1800};
+    uint16_t maxLength{MAX_LENGTH};
   public:
     MoveStat():Timer(FOLLOW_ME_TIME){};
     MoveStat(uint16_t ml):Timer(FOLLOW_ME_TIME), maxLength(ml){};
