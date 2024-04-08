@@ -28,7 +28,7 @@ public:
     int16_t triggerAuto();
     void setLux(float l){lux = l; light = lux < LEVEL_LIGHT? false: true;}
     void setLidar(int16_t mm);
-    void setMotion(bool st);
+    void setMotion(bool st, bool nDay);
     bool cycle();
     // void lidarOn
 };

@@ -3,6 +3,7 @@
 
 //-------------------------------------------
 void MoveStat::setMotion(bool st){
+        Serial.println(st);
     if(st){
         stat = 1;
         wait = 0;
@@ -14,6 +15,7 @@ void MoveStat::setMotion(bool st){
 //----------------------------------
 int16_t MoveStat::cycle(){
     if(wait && getTimer()){
+        Serial.print("2");
         wait = 0;
         stat = 0;
     }

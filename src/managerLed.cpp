@@ -2,7 +2,7 @@
 //------------------------------------------------
 MoveStat* newMS(){
     MoveStat* moveStat = new MoveStat();
-    moveStat -> setDt(1500);
+    moveStat -> setDt(FOLLOW_ME_TIME);
     return moveStat;
 }
 //_____-------------------------------------------
@@ -70,12 +70,15 @@ void ManagerLed::setLidar(int16_t mm){
     }
 }
 //---------------------------------------------
-void ManagerLed::setMotion(bool st){
+void ManagerLed::setMotion(bool st, bool nDay){
     moveStat -> setMotion(st);
     if( moveStat -> getStat() ){
         if(stat == Status::AUTO && !light && (OneLed::getStat() == StatLed::OFF)){
             OneLed::setStat(StatLed::ON);
-            OneLed::setMediumLevel();
+            if(nDay)
+                OneLed::setMediumLevel();
+            else
+                OneLed::setNightLevel();
         }
     } else {
         if((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid){

@@ -1,7 +1,7 @@
 #ifndef MOVESTAT_H
 #define MOVESTAT_H
 #include "Timer.h"
-#define FOLLOW_ME_TIME 10000
+const int16_t FOLLOW_ME_TIME = 10000;
 const int16_t MAX_LENGTH {1700};
 
 class MoveStat:Timer {

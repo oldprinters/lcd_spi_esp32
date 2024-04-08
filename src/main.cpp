@@ -101,7 +101,6 @@ unsigned int color, chkTime;
 //---------------------------------------------
 const int16_t pinLed{32};
 IndMsg indMsg(&tft);
-// OneLed light_1(pinLed, 0, 250);
 ManagerLed light_1(pinLed, 0, 25);
 //*********************************************
 void IRAM_ATTR button_interr_1(){ //IRAM_ATTR
@@ -351,12 +350,23 @@ void outLidar(Adafruit_ILI9341& tft, int16_t mm){
     tft.print(lux);
 }
 //------------------------------------------------------------------------
+bool nowDay(NTPClient *tk){
+  bool res = false;
+  int day = tk->getDay();
+  int hour = tk->getHours();
+  if( (day >= 0) && (day < 5) )
+    res = (hour > 5) && (hour < 23);
+  else
+    res = (hour > 8) && (hour < 24);
+  return res;
+}
+//------------------------------------------------------------------------
 int16_t motion_func(){
   bool res{false};
   if(motion){
     res = true;
     motion = false;
-    light_1.setMotion(digitalRead(pinMove));
+    light_1.setMotion(digitalRead(pinMove), nowDay(&timeClient));
   }
   return res;
 }
@@ -400,16 +410,14 @@ void loop()
       lux = lightMeter.readLightLevel();
       light_1.setLux(lux);
     }
+    
     motion_func();  //проверка движения
-    // light_1.cycle();
+
     if(light_1.cycle()){
       indMsg.set();
     }
-    // if(light_1.getStat()){
-    //   indMsg.set();
-    // }
     indMsg.cycle();
-  //--------------------- BUTTONS
+  //-------------------------------------------------------------------------------- BUTTONS
   if(ft_1 == 3){
     tButt_1.setTimer();
     ft_1 = 2;
@@ -429,9 +437,9 @@ void loop()
 
   if(ft_1 == 2 && tButt_1.getTimer()){
     int16_t i = digitalRead(pinBut1);
-    Serial.print(i == 0? "Long ": "Short ");
-    Serial.print("nCount = ");
-    Serial.println(nClickBut_1);
+    // Serial.print(i == 0? "Long ": "Short ");
+    // Serial.print("nCount = ");
+    // Serial.println(nClickBut_1);
     ft_1 = 0;
     ft_1_pause = 1;
     tPause_1.setTimer();
@@ -454,10 +462,10 @@ void loop()
 
   if(ft_2 == 2 && tButt_2.getTimer()){
     int16_t i = digitalRead(pinBut2);
-    Serial.print("Button 2:  ");
-    Serial.print(i == 0? "Long ": "Short ");
-    Serial.print("nCount = ");
-    Serial.println(nClickBut_2);
+    // Serial.print("Button 2:  ");
+    // Serial.print(i == 0? "Long ": "Short ");
+    // Serial.print("nCount = ");
+    // Serial.println(nClickBut_2);
     ft_2 = 0;
     ft_2_dr = 1;
     tDrebezg_2.setTimer();
