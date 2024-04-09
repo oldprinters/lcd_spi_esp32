@@ -2,8 +2,8 @@
 #include "movestat.h"
 
 //-------------------------------------------
-void MoveStat::setMotion(bool st){
-        Serial.println(st);
+bool MoveStat::setMotion(bool st){
+    bool res = st == true && stat == false;
     if(st){
         stat = 1;
         wait = 0;
@@ -11,13 +11,14 @@ void MoveStat::setMotion(bool st){
         wait = 1;
         setTimer();
     }
+    return res;
 }
 //----------------------------------
-int16_t MoveStat::cycle(){
+bool MoveStat::cycle(){
     if(wait && getTimer()){
-        Serial.print("2");
         wait = 0;
         stat = 0;
+        return true;
     }
-    return stat;
+    return false;
 }

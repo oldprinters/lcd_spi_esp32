@@ -6,6 +6,7 @@
 #include <PubSubClient.h>
 #include "mtime.h"
 #include "Timer.h"
+#include "indMode.h"
 #include "IndMsg.h"
 #include "movestat.h"
 #include "managerLed.h"
@@ -48,7 +49,7 @@ const char* msgTemper="balcony/temper";
 const char* msgPressure="balcony/pressure";
 //---------------------------------------------
 BH1750 lightMeter(0x23);  //0x5c
-float lux{};  //яркость света в помещении
+float lux{8000};  //яркость света в помещении
 //--------------------------------------------- кнопки
 const int16_t pinBut1{34};
 const int16_t pinBut2{35};
@@ -57,6 +58,7 @@ volatile int16_t buttonStatus_2{0}, ft_2{0}, ft_2_dr{0}, nClickBut_2{0};
 const int drDelay{250};
 const int pauseDelay{2000};
 int16_t ft_1_pause{0};
+Timer tLux(500);
 Timer tButt_1(1000);
 Timer tDrebezg_1(drDelay);
 Timer tPause_1(pauseDelay);
@@ -100,8 +102,10 @@ uint16_t nColor{0};
 unsigned int color, chkTime;
 //---------------------------------------------
 const int16_t pinLed{32};
+const int16_t MEDIUM_LEVEL = 50;
 IndMsg indMsg(&tft);
-ManagerLed light_1(pinLed, 0, 25);
+IndMode indMode(&tft);
+ManagerLed light_1(pinLed, 0, MEDIUM_LEVEL, &timeClient);
 //*********************************************
 void IRAM_ATTR button_interr_1(){ //IRAM_ATTR
     detachInterrupt(pinBut1);
@@ -233,7 +237,7 @@ void setup()
     tft.setRotation(0); // portrait, connections at top
     // tft.fillScreen(ILI9341_BLACK);
     tft.fillRect(0,0, 320, 240, TFT_BLACK);
-
+    tLux.setTimer();
     Serial.begin(115200);
     Wire.begin();
     Wire.setClock(400000); // use 400 kHz I2C
@@ -290,7 +294,6 @@ void setup()
     attachInterrupt(digitalPinToInterrupt(pinMove), moving, CHANGE);
     attachInterrupt(digitalPinToInterrupt(pinBut1), button_interr_1, FALLING);
     attachInterrupt(digitalPinToInterrupt(pinBut2), button_interr_2, FALLING);
-
 }
 //------------------------------------------------------------------------
 void outTime(NTPClient *tk){
@@ -315,7 +318,7 @@ void outTime(NTPClient *tk){
         tft.fillRect(cursPosX + wSigns + dt, 4, wSigns + 10, hSigns + 1, TFT_BLACK);
         tft.print(strM);
       case 3: tft.setCursor(cursPosX + (wSigns + dt) * 2, cursPosY);
-        tft.fillRect(cursPosX + (wSigns + dt) * 2, 24, wSigns, hSigns - 20, TFT_BLACK);
+        tft.fillRect(cursPosX + (wSigns + dt) * 2, 32, wSigns - 40, hSigns - 28, TFT_BLACK);
         tft.setTextSize(1); // set text size
         tft.println(strSec);
         break;
@@ -350,23 +353,13 @@ void outLidar(Adafruit_ILI9341& tft, int16_t mm){
     tft.print(lux);
 }
 //------------------------------------------------------------------------
-bool nowDay(NTPClient *tk){
-  bool res = false;
-  int day = tk->getDay();
-  int hour = tk->getHours();
-  if( (day >= 0) && (day < 5) )
-    res = (hour > 5) && (hour < 23);
-  else
-    res = (hour > 8) && (hour < 24);
-  return res;
-}
-//------------------------------------------------------------------------
 int16_t motion_func(){
   bool res{false};
   if(motion){
     res = true;
     motion = false;
-    light_1.setMotion(digitalRead(pinMove), nowDay(&timeClient));
+    int p = digitalRead(pinMove);
+    light_1.setMotion(p);
   }
   return res;
 }
@@ -374,22 +367,22 @@ int16_t motion_func(){
 void loop()
 {
     // tft.print(timeClient.getFormattedTime());
-    if(timer->getTimer()){
-        timer->setTimer();
-        outTime(&timeClient);
-        reconnect_mqtt();
-        if(tInd->getTimer())
-          tft.fillRect( cursPosX + sdvX, cursPosY + sdvY, 20,30, ILI9341_BLACK );
+    if(timer->getTimer()){  //вывод времени
+      timer->setTimer();
+      outTime(&timeClient);
+      reconnect_mqtt();
+      if(tInd->getTimer())
+        tft.fillRect( cursPosX + sdvX, cursPosY + sdvY, 20,30, ILI9341_BLACK );
     }
-    client.loop();
-    if(bHeard && tHeard->getTimer()){
+    client.loop();  //mqtt
+    if(bHeard && tHeard->getTimer()){ //выключена мигающая точка
       bHeard = false;
       tft.fillCircle( pointHM, cursPosY, 4, TFT_BLACK);
     }
 
-    if(timer53L1->getTimer()){
-      timer53L1->setTimer();
+    if(timer53L1->getTimer()){  //дальномер
       sensor.read();
+      timer53L1->setTimer();
       if(sensor.ranging_data.range_status == VL53L1X::RangeStatus::RangeValid){
           outLidar(tft, sensor.ranging_data.range_mm);//sensor.ranging_data.range_mm);
           // Serial.print("range: ");
@@ -401,22 +394,17 @@ void loop()
           // Serial.print("\tambient: ");
           // Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
           // Serial.println();
-      } else {
-        //объект отсутствует
       }
     }
     //....... измерение освещённости
-    if (lightMeter.measurementReady()) {
+    if (tLux.getTimer() && lightMeter.measurementReady()) {
+      tLux.setTimer();
       lux = lightMeter.readLightLevel();
       light_1.setLux(lux);
     }
     
     motion_func();  //проверка движения
 
-    if(light_1.cycle()){
-      indMsg.set();
-    }
-    indMsg.cycle();
   //-------------------------------------------------------------------------------- BUTTONS
   if(ft_1 == 3){
     tButt_1.setTimer();
@@ -446,6 +434,9 @@ void loop()
     detachInterrupt(pinBut1);
     light_1.clickBut(0, i, nClickBut_1);
   }
+
+  if(light_1.getChangesMade())
+    indMode.outMode(light_1.getModeName());
   //---------------------
   if(ft_2 == 3){
     tButt_2.setTimer();
@@ -471,4 +462,9 @@ void loop()
     tDrebezg_2.setTimer();
     detachInterrupt(pinBut2);
   }
+
+  if(light_1.cycle()){
+    indMsg.set();
+  }
+  indMsg.cycle();
 }

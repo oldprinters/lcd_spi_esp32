@@ -9,7 +9,7 @@
 // #else
 // 	#include "WProgram.h"
 // #endif
-#define TIMER_T 8
+#define TIMER_T 20
 enum class StatLed { OFF, ON };
 enum class StatPower { OFF, ON, MOVE, PAUSE_OFF, DIST };
 
@@ -17,11 +17,11 @@ class OneLed: public Timer
 {
 	const int pin;
 	int level { 0 };
-	int levelDim { 0 };
+	int levelDim { 50 };
 	int maxLevel {100};
 	int lowLevel {5};
 	int mediumLevel {50};
-	int nightLevel {10};
+	int nightLevel {2};
 	StatLed statLed { StatLed::ON };
 	int ledChannel = 0;
 	const int resolution = 8;
@@ -32,6 +32,7 @@ public:
 	OneLed(int p, int ch, int medium);
 	OneLed(int p, int ch, int medium, int nLevel);
 	int getPin() { return pin; }
+	int getLevelDim(){return levelDim;}
 	StatLed getStat(){return statLed;}
 	void setStat(StatLed stat);
 	bool trigger();	//изменение состояния на обратное
