@@ -210,9 +210,10 @@ void reconnect_mqtt() {
         client.subscribe(msgHSMotion, 0);
         client.subscribe(msgTemper, 0);
         client.subscribe(msgPressure, 0);
+        tft.fillRect(cursPosX, lidarPosY, 200, hSigns + 1, TFT_BLACK);
       } else {
-        tft.setCursor(cursPosX, cursPosY);
-        tft.fillRect(cursPosX, cursPosY, 200, hSigns + 1, TFT_BLACK);
+        tft.setCursor(cursPosX, lidarPosY);
+        tft.fillRect(cursPosX, lidarPosY, 200, hSigns + 1, TFT_BLACK);
         tft.print("Check the server MQTT.");
         Serial.print("failed, rc=");
         Serial.print(client.state());
@@ -385,6 +386,7 @@ void loop()
       timer53L1->setTimer();
       if(sensor.ranging_data.range_status == VL53L1X::RangeStatus::RangeValid){
           outLidar(tft, sensor.ranging_data.range_mm);//sensor.ranging_data.range_mm);
+          light_1.setLidar(sensor.ranging_data.range_mm);
           // Serial.print("range: ");
           // Serial.print(sensor.ranging_data.range_mm);
           // Serial.print("\tstatus: ");

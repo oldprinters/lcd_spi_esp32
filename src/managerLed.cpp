@@ -102,6 +102,8 @@ bool ManagerLed::cycle(){
                     if(presence && (stat == Status::AUTO) && !light){
                         OneLed::setStat(StatLed::ON);
                         OneLed::setMediumLevel();   
+                    } else if(presence && (stat == Status::AUTO) && light){
+                        OneLed::setStat(StatLed::OFF);
                     }
                     break;
                 case 3:
@@ -114,8 +116,13 @@ bool ManagerLed::cycle(){
                                 OneLed::setNightLevel();
                         }
                     } else {
-                        if(((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid)
-                            || ((*pSensor).ranging_data.range_mm > MAX_LENGTH))
+                        pSensor->read();
+                        // Serial.print((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid);
+                        // Serial.print(", mm = ");
+                        // Serial.println((*pSensor).ranging_data.range_mm);
+                        // if(((*pSensor).ranging_data.range_status != VL53L1X::RangeStatus::RangeValid)
+                        //     || ((*pSensor).ranging_data.range_mm > MAX_LENGTH))
+                        if((*pSensor).ranging_data.range_mm > MAX_LENGTH)
                             {
                             if(stat == Status::AUTO){
                                 OneLed::setStat(StatLed::OFF);
@@ -151,7 +158,8 @@ void ManagerLed::setLux(float l){
         bool d2 = l > LEVEL_LIGHT;
         if(d1 ^ d2)queue.push_back(4);
         lux = l; 
-        light = lux < LEVEL_LIGHT? false: true;
+        int16_t dLux = static_cast<int>(OneLed::getStat())? D_LEVEL_LIGHT: -1 * D_LEVEL_LIGHT;
+        light = lux < LEVEL_LIGHT - dLux? false: true;
     }
 }
 //------------------------------------------------------------------------

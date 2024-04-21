@@ -8,6 +8,7 @@
 #include <vector>
 
 const int16_t LEVEL_LIGHT = 120;
+const int16_t D_LEVEL_LIGHT = 10;
 
 enum class Status { OFF, ON, AUTO };
 
