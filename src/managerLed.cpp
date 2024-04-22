@@ -131,7 +131,8 @@ bool ManagerLed::cycle(){
                     }
                     break;
                 case 4: if(stat == Status::AUTO && (OneLed::getStat() == StatLed::OFF) && 
-                            !light && ((*pSensor).ranging_data.range_status == VL53L1X::RangeStatus::RangeValid)){
+                            !light && ((*pSensor).ranging_data.range_status == VL53L1X::RangeStatus::RangeValid) &&
+                            ((*pSensor).ranging_data.range_mm < MAX_LENGTH)){
                         OneLed::setStat(StatLed::ON);
                         OneLed::setMediumLevel();
                     } else if(stat == Status::AUTO && (OneLed::getStat() == StatLed::ON) && light){
@@ -153,14 +154,14 @@ bool ManagerLed::getStat(){
 }
 //--------------------------------------------------------
 void ManagerLed::setLux(float l){
-    if((lux != l) || (lux == 0 && l == 0)){
-        bool d1 = lux > LEVEL_LIGHT;
-        bool d2 = l > LEVEL_LIGHT;
-        if(d1 ^ d2)queue.push_back(4);
-        lux = l; 
-        int16_t dLux = static_cast<int>(OneLed::getStat())? D_LEVEL_LIGHT: -1 * D_LEVEL_LIGHT;
-        light = lux < LEVEL_LIGHT - dLux? false: true;
+    if(l < LEVEL_LIGHT - D_LEVEL_LIGHT ) {
+        queue.push_back(4);
+        light = false;
+    } else if( l > LEVEL_LIGHT + D_LEVEL_LIGHT) {
+        queue.push_back(4);
+        light = true;
     }
+    lux = l; 
 }
 //------------------------------------------------------------------------
 bool ManagerLed::nowDay(){
