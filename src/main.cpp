@@ -16,6 +16,7 @@
 #include <BH1750.h> 
 #include "FreeMono24pt7b.h"
 #include "FreeMono12pt7b.h"
+//с большим дисплеем у меня на столе
 
 VL53L1X sensor;
 Timer* timer53L1;
